@@ -26,6 +26,10 @@ from pydub import AudioSegment
 import torch
 from scipy import signal as scipy_signal
 
+# Setup logging FIRST
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # Optional: Try to import pedalboard for advanced effects
 try:
     from pedalboard import (
@@ -34,13 +38,10 @@ try:
         HighpassFilter, LowpassFilter, PeakFilter
     )
     PEDALBOARD_AVAILABLE = True
+    logger.info("Pedalboard available - using professional audio effects")
 except ImportError:
     PEDALBOARD_AVAILABLE = False
     logger.warning("Pedalboard not available. Using basic audio effects fallback.")
-
-# Setup logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 
 class AudioProcessor:
