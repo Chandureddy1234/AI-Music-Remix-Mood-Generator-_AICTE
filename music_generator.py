@@ -11,15 +11,24 @@ Version: 2.0.0
 
 import os
 import logging
-import torch
-import torchaudio
 import numpy as np
 from typing import Optional, Dict, Any, List, Tuple, Union
 from pathlib import Path
 
-# Configure logging
+# Configure logging FIRST
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Optional: PyTorch (only needed for local AudioCraft)
+try:
+    import torch
+    import torchaudio
+    TORCH_AVAILABLE = True
+    logger.info("✓ Torch available for GPU acceleration")
+except ImportError:
+    TORCH_AVAILABLE = False
+    torch = None
+    logger.warning("⚠️ Torch not available - using CPU-only mode")
 
 # Try importing optional dependencies
 try:
@@ -144,7 +153,10 @@ class MusicGenPipeline:
         
         # Determine device (only for local)
         if device is None:
-            self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+            if TORCH_AVAILABLE:
+                self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+            else:
+                self.device = 'cpu'
         else:
             self.device = device
         
@@ -294,8 +306,12 @@ class MusicGenPipeline:
         )
         
         # Generate
-        with torch.no_grad():
-            wav = self.model.generate([prompt])
+        if TORCH_AVAILABLE:
+            with torch.no_grad():
+                wav = self.model.generate([prompt])
+        else:
+            # Should not reach here if AUDIOCRAFT_AVAILABLE is False
+            raise RuntimeError("Torch not available for local generation")
         
         audio = wav[0].cpu().numpy()
         logger.info(f"Generated local audio: shape={audio.shape}")
