@@ -332,24 +332,6 @@ class SecureKeyManager:
             }
         }
 
-# Helper function to get secrets (DEPRECATED - use SecureKeyManager)
-def get_secret(key: str, default: str = "") -> str:
-    """
-    DEPRECATED: Use SecureKeyManager.get_key() instead.
-    
-    Get secret from Streamlit Cloud secrets or .env file.
-    This function is kept for backward compatibility.
-    
-    Args:
-        key: Secret key name
-        default: Default value if not found
-    
-    Returns:
-        Secret value or default
-    """
-    result = SecureKeyManager.get_key(key)
-    return result if result is not None else default
-
 # ============================================================================
 # RATE LIMITING (Prevent API Abuse)
 # ============================================================================
