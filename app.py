@@ -1029,7 +1029,7 @@ def generate_music_advanced(prompt, genre, mood, instruments, bpm, key, duration
             st.audio(str(saved_path))
             
             with open(saved_path, "rb") as f:
-                st.download_button("⬇️ Download", f.read(), file_name=saved_path.name, mime="audio/wav")
+                st.download_button("⬇️ Download", f.read(), file_name=Path(saved_path).name, mime="audio/wav")
             
     except Exception as e:
         st.error(f"❌ Error: {str(e)}")
@@ -1071,7 +1071,7 @@ def generate_from_preset(preset_name, preset_config, model_size, temperature):
             st.audio(str(saved_path))
             
             with open(saved_path, "rb") as f:
-                st.download_button("⬇️ Download", f.read(), file_name=saved_path.name, mime="audio/wav")
+                st.download_button("⬇️ Download", f.read(), file_name=Path(saved_path).name, mime="audio/wav")
             
     except Exception as e:
         st.error(f"❌ Error: {str(e)}")
@@ -1235,7 +1235,7 @@ def stem_separation_tab(audio_path):
                         
                         # Save stem
                         stem_path = config.OUTPUT_DIR / f"{stem_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.wav"
-                        processor.save_audio(stem_audio, stem_path, processor.sample_rate)
+                        stem_path = processor.save_audio(stem_audio, stem_path, processor.sample_rate)
                         
                         # Beautiful audio player
                         audio_player(
@@ -1342,7 +1342,7 @@ def tempo_pitch_tab(audio_path):
                 st.audio(str(saved_path))
                 
                 with open(saved_path, "rb") as f:
-                    st.download_button("⬇️ Download", f.read(), file_name=saved_path.name, mime="audio/wav")
+                    st.download_button("⬇️ Download", f.read(), file_name=Path(saved_path).name, mime="audio/wav")
                 
         except Exception as e:
             st.error(f"❌ Error: {str(e)}")
@@ -1421,7 +1421,7 @@ def effects_tab(audio_path):
                     st.audio(str(saved_path))
                 
                 with open(saved_path, "rb") as f:
-                    st.download_button("⬇️ Download", f.read(), file_name=saved_path.name, mime="audio/wav")
+                    st.download_button("⬇️ Download", f.read(), file_name=Path(saved_path).name, mime="audio/wav")
                 
         except Exception as e:
             st.error(f"❌ Error: {str(e)}")
@@ -1824,7 +1824,7 @@ def creative_studio_page():
                             st.download_button(
                                 "⬇️ Download Mix",
                                 f.read(),
-                                file_name=saved_path.name,
+                                file_name=Path(saved_path).name,
                                 mime="audio/wav",
                                 use_container_width=True
                             )
