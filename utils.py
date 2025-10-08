@@ -29,6 +29,15 @@ from config import config
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Optional: PyTorch (for hardware detection only)
+try:
+    import torch
+    TORCH_AVAILABLE = True
+except ImportError:
+    TORCH_AVAILABLE = False
+    torch = None
+    logger.debug("Torch not available for hardware detection")
+
 
 # =============================================================================
 # LLM CLIENT IMPLEMENTATIONS
@@ -725,8 +734,12 @@ def estimate_generation_time(duration: float, model_size: str) -> float:
     base_time = duration * time_multipliers.get(model_size, 1.0)
     
     # Adjust for CPU vs GPU
-    if not torch.cuda.is_available():
-        base_time *= 3  # CPU is ~3x slower
+    if TORCH_AVAILABLE and torch:
+        if not torch.cuda.is_available():
+            base_time *= 3  # CPU is ~3x slower
+    else:
+        # Assume CPU if torch not available
+        base_time *= 3
     
     return base_time
 
