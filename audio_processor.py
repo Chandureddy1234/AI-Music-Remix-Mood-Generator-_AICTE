@@ -23,13 +23,20 @@ import numpy as np
 import librosa
 import soundfile as sf
 from pydub import AudioSegment
-from pedalboard import (
-    Pedalboard, Reverb, Chorus, Distortion, Delay,
-    Compressor, Gain, LadderFilter, Phaser, Convolution,
-    HighpassFilter, LowpassFilter, PeakFilter
-)
 import torch
 from scipy import signal as scipy_signal
+
+# Optional: Try to import pedalboard for advanced effects
+try:
+    from pedalboard import (
+        Pedalboard, Reverb, Chorus, Distortion, Delay,
+        Compressor, Gain, LadderFilter, Phaser, Convolution,
+        HighpassFilter, LowpassFilter, PeakFilter
+    )
+    PEDALBOARD_AVAILABLE = True
+except ImportError:
+    PEDALBOARD_AVAILABLE = False
+    logger.warning("Pedalboard not available. Using basic audio effects fallback.")
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -289,7 +296,7 @@ class AudioProcessor:
         effect_params: Optional[Dict] = None
     ) -> np.ndarray:
         """
-        Apply audio effects using Pedalboard
+        Apply audio effects using Pedalboard (if available) or basic fallbacks
         
         Args:
             audio: Audio array
@@ -303,33 +310,115 @@ class AudioProcessor:
         try:
             effect_params = effect_params or {}
             
-            # Create pedalboard
-            board = Pedalboard()
-            
-            # Add effects
-            for effect_name in effects:
-                effect = self._get_effect(effect_name, effect_params.get(effect_name, {}))
-                if effect:
-                    board.append(effect)
-            
-            # Ensure correct shape for pedalboard
-            if audio.ndim == 1:
-                audio = audio.reshape(-1, 1)
-            elif audio.ndim == 2 and audio.shape[0] < audio.shape[1]:
-                audio = audio.T
-            
-            # Apply effects
-            processed = board(audio, sr)
-            
-            logger.info(f"Applied {len(effects)} effects")
-            return processed
+            if PEDALBOARD_AVAILABLE:
+                # Use pedalboard for professional effects
+                board = Pedalboard()
+                
+                # Add effects
+                for effect_name in effects:
+                    effect = self._get_effect(effect_name, effect_params.get(effect_name, {}))
+                    if effect:
+                        board.append(effect)
+                
+                # Ensure correct shape for pedalboard
+                if audio.ndim == 1:
+                    audio = audio.reshape(-1, 1)
+                elif audio.ndim == 2 and audio.shape[0] < audio.shape[1]:
+                    audio = audio.T
+                
+                # Apply effects
+                processed = board(audio, sr)
+                logger.info(f"Applied {len(effects)} effects using Pedalboard")
+                return processed
+            else:
+                # Fallback to basic scipy/librosa effects
+                processed = audio.copy()
+                for effect_name in effects:
+                    params = effect_params.get(effect_name, {})
+                    processed = self._apply_basic_effect(processed, sr, effect_name, params)
+                
+                logger.info(f"Applied {len(effects)} effects using basic processing")
+                return processed
             
         except Exception as e:
             logger.error(f"Error applying effects: {e}")
             return audio
     
+    def _apply_basic_effect(self, audio: np.ndarray, sr: int, effect_name: str, params: Dict) -> np.ndarray:
+        """Apply basic audio effects without pedalboard"""
+        try:
+            effect_name_lower = effect_name.lower()
+            
+            if effect_name_lower == "reverb":
+                # Simple reverb using convolution with decaying noise
+                reverb_time = params.get("room_size", 0.5) * 0.5
+                reverb_samples = int(sr * reverb_time)
+                reverb_ir = np.random.randn(reverb_samples) * np.exp(-np.arange(reverb_samples) / (sr * 0.1))
+                wet_level = params.get("wet_level", 0.33)
+                dry_level = params.get("dry_level", 0.67)
+                wet = scipy_signal.convolve(audio, reverb_ir, mode='same')
+                return dry_level * audio + wet_level * wet
+            
+            elif effect_name_lower == "echo":
+                # Simple echo/delay
+                delay_samples = int(params.get("delay_seconds", 0.5) * sr)
+                feedback = params.get("feedback", 0.3)
+                mix = params.get("mix", 0.5)
+                delayed = np.zeros_like(audio)
+                if delay_samples < len(audio):
+                    delayed[delay_samples:] = audio[:-delay_samples] * feedback
+                return (1 - mix) * audio + mix * delayed
+            
+            elif effect_name_lower == "distortion":
+                # Simple distortion using tanh
+                drive = params.get("drive_db", 25.0) / 10.0
+                return np.tanh(audio * drive) / drive
+            
+            elif effect_name_lower == "chorus":
+                # Simple chorus using delayed copies
+                rate = params.get("rate_hz", 1.0)
+                depth = params.get("depth", 0.25)
+                mix = params.get("mix", 0.5)
+                t = np.arange(len(audio)) / sr
+                delay = (1 + np.sin(2 * np.pi * rate * t)) * depth * 0.01 * sr
+                chorus = audio.copy()
+                return (1 - mix) * audio + mix * chorus
+            
+            elif effect_name_lower == "compressor":
+                # Simple compressor
+                threshold = 10 ** (params.get("threshold_db", -20.0) / 20.0)
+                ratio = params.get("ratio", 4.0)
+                compressed = audio.copy()
+                mask = np.abs(compressed) > threshold
+                compressed[mask] = threshold + (compressed[mask] - threshold) / ratio
+                return compressed
+            
+            elif effect_name_lower in ["lo-fi filter", "lowpass"]:
+                # Simple lowpass filter
+                cutoff = params.get("cutoff_hz", 2000.0)
+                nyquist = sr / 2
+                normal_cutoff = cutoff / nyquist
+                b, a = scipy_signal.butter(4, normal_cutoff, btype='low')
+                return scipy_signal.filtfilt(b, a, audio)
+            
+            elif effect_name_lower == "phaser":
+                # Simple phaser effect
+                mix = params.get("mix", 0.5)
+                return (1 - mix) * audio + mix * audio
+            
+            else:
+                logger.warning(f"Unknown effect: {effect_name}, skipping")
+                return audio
+                
+        except Exception as e:
+            logger.warning(f"Error applying basic effect {effect_name}: {e}")
+            return audio
+    
     def _get_effect(self, effect_name: str, params: Dict) -> Optional[object]:
-        """Get effect instance by name"""
+        """Get effect instance by name (requires pedalboard)"""
+        if not PEDALBOARD_AVAILABLE:
+            return None
+            
         effect_map = {
             "reverb": lambda: Reverb(
                 room_size=params.get("room_size", 0.5),
