@@ -19,12 +19,35 @@ import logging
 from concurrent.futures import ThreadPoolExecutor
 import threading
 
+# Setup logging FIRST
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 import numpy as np
 import librosa
 import soundfile as sf
-from pydub import AudioSegment
-import torch
+
+# Optional: PyDub (for format conversion)
+try:
+    from pydub import AudioSegment
+    PYDUB_AVAILABLE = True
+    logger.info("PyDub available - format conversion enabled")
+except ImportError:
+    PYDUB_AVAILABLE = False
+    AudioSegment = None
+    logger.warning("PyDub not available. Format conversion may be limited.")
+
 from scipy import signal as scipy_signal
+
+# Optional: PyTorch (not needed for basic audio processing)
+try:
+    import torch
+    TORCH_AVAILABLE = True
+    logger.info("Torch available for GPU acceleration")
+except ImportError:
+    TORCH_AVAILABLE = False
+    torch = None
+    logger.warning("Torch not available - using CPU-only mode")
 
 # Setup logging FIRST
 logging.basicConfig(level=logging.INFO)
@@ -120,21 +143,26 @@ class AudioProcessor:
             
             # Convert to target format if needed
             if format.lower() != 'wav':
-                audio_segment = AudioSegment.from_wav(temp_wav)
-                output_path = file_path.with_suffix(f'.{format}')
-                
-                # Export with high quality
-                export_params = {
-                    "mp3": {"bitrate": "320k"},
-                    "ogg": {"codec": "libvorbis", "bitrate": "320k"},
-                    "flac": {},
-                }
-                
-                audio_segment.export(
-                    output_path,
-                    format=format,
-                    **export_params.get(format, {})
-                )
+                if PYDUB_AVAILABLE and AudioSegment:
+                    audio_segment = AudioSegment.from_wav(temp_wav)
+                    output_path = file_path.with_suffix(f'.{format}')
+                    
+                    # Export with high quality
+                    export_params = {
+                        "mp3": {"bitrate": "320k"},
+                        "ogg": {"codec": "libvorbis", "bitrate": "320k"},
+                        "flac": {},
+                    }
+                    
+                    audio_segment.export(
+                        output_path,
+                        format=format,
+                        **export_params.get(format, {})
+                    )
+                else:
+                    # Fallback: save as WAV if pydub unavailable
+                    logger.warning(f"PyDub not available, saving as WAV instead of {format}")
+                    output_path = temp_wav
                 
                 # Remove temp wav
                 temp_wav.unlink()
@@ -684,22 +712,28 @@ def convert_audio_format(
             output_path = Path(output_path)
         
         # Load and save with new format
-        audio = AudioSegment.from_file(input_path)
-        
-        export_params = {
-            "mp3": {"bitrate": "320k"},
-            "wav": {},
-            "flac": {},
-            "ogg": {"codec": "libvorbis", "bitrate": "320k"},
-        }
-        
-        audio.export(
-            output_path,
-            format=output_format,
-            **export_params.get(output_format, {})
-        )
-        
-        logger.info(f"Converted {input_path} to {output_format}")
+        if PYDUB_AVAILABLE and AudioSegment:
+            audio = AudioSegment.from_file(input_path)
+            
+            export_params = {
+                "mp3": {"bitrate": "320k"},
+                "wav": {},
+                "flac": {},
+                "ogg": {"codec": "libvorbis", "bitrate": "320k"},
+            }
+            
+            audio.export(
+                output_path,
+                format=output_format,
+                **export_params.get(output_format, {})
+            )
+            
+            logger.info(f"Converted {input_path} to {output_format}")
+        else:
+            # Fallback: use librosa and soundfile
+            logger.warning("PyDub not available, using librosa for conversion")
+            audio, sr = librosa.load(str(input_path), sr=None, mono=False)
+            sf.write(str(output_path), audio.T if audio.ndim > 1 else audio, sr)
         return output_path
         
     except Exception as e:
