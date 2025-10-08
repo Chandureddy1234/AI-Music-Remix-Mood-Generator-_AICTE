@@ -1,56 +1,36 @@
-# AI Music Generator - Production Dependencies
-# Core Framework
+# AI Music Generator - Streamlit Cloud Production Dependencies
+# Optimized for cloud deployment with minimal dependencies
+
+# ===== CORE FRAMEWORK =====
 streamlit>=1.31.0
 streamlit-option-menu>=0.3.12
 
-# Deep Learning & Audio AI
+# ===== DEEP LEARNING & AUDIO (Lightweight) =====
 torch>=2.0.0
 torchaudio>=2.0.0
 transformers>=4.30.0
-audiocraft>=1.0.0  # Meta's MusicGen (optional - large download)
 
-# Audio Processing
+# ===== AUDIO PROCESSING =====
 librosa>=0.10.0
 soundfile>=0.12.1
 pydub>=0.25.1
-pedalboard>=0.9.0  # Professional audio effects
 scipy>=1.11.1
 numpy>=1.24.3
 
-# Music Analysis
-essentia>=2.1b6.dev1034  # Optional - advanced analysis
-essentia-tensorflow>=2.1b6.dev1034  # Optional
+# ===== LLM INTEGRATION =====
+groq>=0.4.0
+openai>=1.0.0
 
-# Demucs for Stem Separation (optional - large download)
-demucs>=4.0.0
+# ===== CLOUD MUSIC GENERATION APIs =====
+replicate>=0.15.0
+gradio-client>=0.8.1
+huggingface-hub>=0.20.0
 
-# LLM Integration
-groq>=0.4.0  # Groq API for prompt enhancement
-openai>=1.0.0  # OpenRouter compatibility
-ollama>=0.1.0  # Local LLM support (optional)
-
-# Cloud Music Generation APIs
-replicate>=0.15.0  # Replicate API
-gradio-client>=0.8.1  # Gradio Spaces
-huggingface-hub>=0.20.0  # HuggingFace Inference API
-
-# Visualization
+# ===== VISUALIZATION =====
 plotly>=5.14.1
 matplotlib>=3.7.1
 
-# Utilities
+# ===== UTILITIES =====
 python-dotenv>=1.0.0
 requests>=2.31.0
 Pillow>=10.0.0
-rich>=13.7.0  # Beautiful terminal output
-
-# Optional Advanced Features
-pyrubberband>=0.3.0  # Time stretching (optional)
-pydub>=0.25.1  # Audio format conversion
-ffmpeg-python>=0.2.0  # FFmpeg wrapper (optional)
-
-# Development & Testing (optional)
-pytest>=7.4.0
-pytest-cov>=4.1.0
-black>=23.7.0
-flake8>=6.1.0
