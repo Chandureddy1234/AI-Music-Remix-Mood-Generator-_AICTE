@@ -211,7 +211,10 @@ class AudioProcessor:
                 audio = np.repeat(audio, 2, axis=0)
             
             # Convert to tensor
-            audio_tensor = torch.from_numpy(audio).float().unsqueeze(0)
+            if TORCH_AVAILABLE and torch:
+                audio_tensor = torch.from_numpy(audio).float().unsqueeze(0)
+            else:
+                raise RuntimeError("Torch required for Demucs stem separation")
             
             # Apply model
             logger.info("Separating stems...")
@@ -757,7 +760,10 @@ class AudioSeparator:
         """
         self.model_name = model_name
         self.model = None
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        if TORCH_AVAILABLE and torch:
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        else:
+            self.device = "cpu"
     
     def load_model(self):
         """Load Demucs model"""
@@ -814,8 +820,11 @@ class AudioSeparator:
             # Apply separation
             audio_tensor = audio.unsqueeze(0).to(self.device)
             
-            with torch.no_grad():
-                sources = apply_model(self.model, audio_tensor, device=self.device)
+            if TORCH_AVAILABLE and torch:
+                with torch.no_grad():
+                    sources = apply_model(self.model, audio_tensor, device=self.device)
+            else:
+                raise RuntimeError("Torch required for Demucs separation")
             
             if progress_callback:
                 progress_callback(0.9, "Processing results...")
