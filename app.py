@@ -385,8 +385,8 @@ def check_configuration():
 
 
 @st.cache_resource
-def load_music_generator(model_size: str = "medium"):
-    """Load and cache music generator"""
+def load_music_generator(model_size: str = "medium", provider: str = "Auto (Free)"):
+    """Load and cache music generator with provider selection"""
     try:
         from config import Config, api_key_manager
         import os
@@ -397,14 +397,32 @@ def load_music_generator(model_size: str = "medium"):
         groq_key = api_key_manager.get_api_key("groq") or Config.GROQ_API_KEY
         replicate_token = api_key_manager.get_api_key("replicate") or Config.REPLICATE_API_TOKEN
         
+        # Determine which provider to use based on selection
+        use_cloud = True
+        force_free = False
+        
+        if provider == "Free Generator Only":
+            force_free = True
+            logger.info("🎵 Using FREE generator (no API keys required)")
+        elif provider == "Groq + Free":
+            if not groq_key:
+                st.warning("⚠️ Groq API key not found. Add it in Settings or using Free generator fallback.")
+            logger.info("🎵 Preferring Groq API for prompt enhancement")
+        elif provider == "HuggingFace + Free":
+            if not hf_token:
+                st.warning("⚠️ HuggingFace token not found. Add it in Settings or using Free generator fallback.")
+            logger.info("🎵 Preferring HuggingFace API")
+        else:  # Auto (Free)
+            logger.info("🎵 Auto-selecting best available provider")
+        
         # Set environment variables for cloud generator to pick up
-        if suno_token:
+        if suno_token and not force_free:
             os.environ["SUNO_API_TOKEN"] = suno_token
             logger.info("✓ Suno AI token configured")
-        if hf_token:
+        if hf_token and not force_free:
             os.environ["HUGGINGFACE_TOKEN"] = hf_token
             logger.info("✓ HuggingFace token configured")
-        if replicate_token:
+        if replicate_token and not force_free:
             os.environ["REPLICATE_API_TOKEN"] = replicate_token
             logger.info("✓ Replicate token configured")
         
@@ -412,11 +430,11 @@ def load_music_generator(model_size: str = "medium"):
         from music_generator import MusicGenPipeline
         generator = MusicGenPipeline(
             model_size=model_size,
-            groq_api_key=groq_key,
-            use_cloud=True  # Use cloud by default (HuggingFace API)
+            groq_api_key=groq_key if not force_free else None,
+            use_cloud=use_cloud  # Always use cloud mode for Streamlit
         )
         
-        logger.info(f"✓ Music generator loaded with model size: {model_size}")
+        logger.info(f"✓ Music generator loaded with model size: {model_size}, provider: {provider}")
         
         return generator
     except Exception as e:
@@ -766,14 +784,22 @@ def music_generation_page():
             with col2:
                 mood = st.selectbox("Mood", options=[""] + config.MOODS)
             
-            use_llm = st.checkbox("✨ Enhance prompt with AI", value=True, 
-                                 help="Use LLM to create more detailed prompt")
+            col1, col2 = st.columns(2)
+            with col1:
+                use_llm = st.checkbox("✨ Enhance prompt with AI", value=True, 
+                                     help="Use LLM to create more detailed prompt")
+            with col2:
+                provider = st.selectbox(
+                    "🎵 Music Provider",
+                    options=["Auto (Free)", "Groq + Free", "HuggingFace + Free", "Free Generator Only"],
+                    help="Select music generation provider. 'Auto' uses available API keys or free generator"
+                )
             
             if action_button("🎵 Generate Music", key="gen_simple"):
                 if not user_prompt and not genre and not mood:
                     error_message("Please provide at least a description, genre, or mood")
                 else:
-                    generate_music_simple(user_prompt, genre, mood, duration, temperature, model_size, use_llm)
+                    generate_music_simple(user_prompt, genre, mood, duration, temperature, model_size, use_llm, provider)
     
     # TAB 2: Advanced Mode
     with tab2:
@@ -801,11 +827,19 @@ def music_generation_page():
             with col2:
                 instruments = st.multiselect("Instruments", options=config.INSTRUMENTS)
             
+            # Provider selection for advanced mode
+            adv_provider = st.selectbox(
+                "🎵 Music Provider",
+                options=["Auto (Free)", "Groq + Free", "HuggingFace + Free", "Free Generator Only"],
+                help="Select music generation provider. 'Auto' uses available API keys or free generator",
+                key="adv_provider"
+            )
+            
             if action_button("🎼 Generate Advanced", key="gen_advanced"):
                 full_key = f"{key} {key_type}"
                 generate_music_advanced(
                     adv_prompt, adv_genre, adv_mood, instruments, bpm, full_key,
-                    duration, temperature, model_size
+                    duration, temperature, model_size, adv_provider
                 )
     
     # TAB 3: Presets
@@ -851,13 +885,13 @@ def music_generation_page():
                     error_message("Please provide a base prompt")
 
 
-def generate_music_simple(prompt, genre, mood, duration, temperature, model_size, use_llm):
+def generate_music_simple(prompt, genre, mood, duration, temperature, model_size, use_llm, provider="Auto (Free)"):
     """Generate music in simple mode"""
     try:
         # Show loading spinner
         with st.spinner("🎵 Generating music... This may take a minute..."):
-            # Load generator
-            generator = load_music_generator(model_size)
+            # Load generator with provider preference
+            generator = load_music_generator(model_size, provider)
             if not generator:
                 error_message("Failed to load music generator")
                 return
@@ -879,6 +913,9 @@ def generate_music_simple(prompt, genre, mood, duration, temperature, model_size
                 if mood:
                     parts.append(f"with {mood.lower()} mood")
                 final_prompt = ", ".join(parts)
+            
+            # Show provider info
+            info_message(f"🎵 Using provider: {provider}")
             
             # Generate
             progress = st.progress(0)
@@ -990,11 +1027,11 @@ def generate_music_simple(prompt, genre, mood, duration, temperature, model_size
         logger.error(f"Generation error: {e}", exc_info=True)
 
 
-def generate_music_advanced(prompt, genre, mood, instruments, bpm, key, duration, temperature, model_size):
+def generate_music_advanced(prompt, genre, mood, instruments, bpm, key, duration, temperature, model_size, provider="Auto (Free)"):
     """Generate music in advanced mode"""
     try:
         with st.spinner("🎼 Generating advanced music..."):
-            generator = load_music_generator(model_size)
+            generator = load_music_generator(model_size, provider)
             if not generator:
                 return
             
@@ -1018,6 +1055,7 @@ def generate_music_advanced(prompt, genre, mood, instruments, bpm, key, duration
                 parts.append(f"at {bpm} BPM in {key}")
                 final_prompt = ", ".join(parts)
             
+            st.info(f"🎵 Using provider: {provider}")
             st.info(f"🎵 Generating: {final_prompt}")
             
             audio, sr = generator.generate_music(final_prompt, duration=duration, temperature=temperature)
