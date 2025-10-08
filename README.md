@@ -1,4 +1,4 @@
-# 🎵 AI Music Remix & Mood Generator# 🎵 AI Music Remix & Mood Generator
+# 🎵 AI Music Remix & Mood Generator
 
 
 
@@ -6,7 +6,7 @@ A powerful AI-powered music generation and remixing application built with Strea
 
 
 
-## ✨ Features![License](https://img.shields.io/badge/license-MIT-blue.svg)
+## ✨ Features!
 
 ![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)
 
@@ -120,111 +120,6 @@ pip install -r requirements.txt- Waveform and spectrogram visualizations
 
 streamlit run app.py
 
-```---
-
-
-
-## 🔑 API Keys (Optional)## 🆓 100% Free Technology
-
-
-
-The app works with FREE cloud providers, but for better quality:| Component | Provider | Cost |
-
-|-----------|----------|------|
-
-- **Groq API**: Get free key at https://console.groq.com| Music Generation | Meta MusicGen | FREE |
-
-- **Hugging Face**: Get free token at https://huggingface.co/settings/tokens| Stem Separation | Demucs | FREE |
-
-| Cloud APIs | HuggingFace, Replicate | FREE tiers |
-
-## 📦 Dependencies| LLM Enhancement | Groq (Llama 3.1) | FREE 30 req/min |
-
-| Audio Effects | Pedalboard (Spotify) | FREE |
-
-All dependencies are listed in `requirements.txt`:
-
-- streamlit---
-
-- torch
-
-- torchaudio## 🚀 Quick Start
-
-- pydub
-
-- numpy### Prerequisites
-
-- scipy- Python 3.9+
-
-- requests- 4GB RAM (8GB recommended)
-
-- groq- Internet connection
-
-- huggingface-hub
-
-- And more...### Installation (2 minutes)
-
-
-
-## 🌐 Live Demo```bash
-
-# 1. Clone repository
-
-Deploy your own instance on Streamlit Cloud:git clone <your-repo-url>
-
-cd "AI music generator"
-
-1. Fork this repository
-
-2. Go to [Streamlit Cloud](https://streamlit.io/cloud)# 2. Create virtual environment
-
-3. Sign in with GitHubpython -m venv venv
-
-4. Click "New app"
-
-5. Select this repository# Windows
-
-6. Set main file: `app.py`venv\Scripts\activate
-
-7. (Optional) Add API keys in Secrets
-
-8. Deploy!# Mac/Linux
-
-source venv/bin/activate
-
-## 📁 Project Structure
-
-# 3. Install dependencies
-
-```pip install -r requirements.txt
-
-├── app.py                      # Main Streamlit application
-
-├── music_generator.py          # Music generation logic# 4. Run app
-
-├── cloud_music_generator.py    # Cloud-based generationstreamlit run app.py
-
-├── audio_processor.py          # Audio processing```
-
-├── cloud_audio_analysis.py     # Cloud audio analysis
-
-├── components.py               # UI componentsOpens at `http://localhost:8501`
-
-├── config.py                   # Configuration
-
-├── utils.py                    # Utility functions### Optional: Add API Keys (All FREE)
-
-├── requirements.txt            # Python dependencies
-
-├── style.css                   # Custom stylingGet a Groq API key for better prompts (30 req/min free):
-
-└── utils/1. Visit https://console.groq.com
-
-    ├── audio_utils.py          # Audio utilities2. Sign up and create API key
-
-    └── file_utils.py           # File utilities3. Create `.env` file: `GROQ_API_KEY=gsk_your_key`
-
-```
 
 **Other free options:**
 
@@ -350,21 +245,8 @@ Check `.env` file or add keys in Settings page.
 
 ## 🚀 Deploy to Streamlit Cloud (FREE Hosting)
 
-```bash
-# 1. Push to GitHub
-git init
-git add .
-git commit -m "AI Music Generator"
-git push origin main
 
-# 2. Deploy
-# Visit streamlit.io/cloud
-# Connect GitHub repo
-# Add API keys in Secrets
-# Deploy!
-```
-
-Your app gets a free URL: `https://your-app.streamlit.app`
+Your app gets a free URL: ``
 
 ---
 
@@ -378,9 +260,7 @@ Pull requests welcome! Please:
 
 ---
 
-## 📄 License
 
-MIT License - Free to use, modify, and distribute!
 
 ---
 
