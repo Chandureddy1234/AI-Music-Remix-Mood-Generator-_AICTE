@@ -26,9 +26,15 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 import json
 from dotenv import load_dotenv
-import torch
 import time
 from functools import wraps
+
+# Optional: PyTorch (not needed for cloud-only deployment)
+try:
+    import torch
+    TORCH_AVAILABLE = True
+except ImportError:
+    TORCH_AVAILABLE = False
 
 # Load environment variables from .env file (for local development)
 load_dotenv()
@@ -775,18 +781,24 @@ class Config:
     @classmethod
     def get_device(cls) -> str:
         """Get compute device (cuda/cpu)"""
-        return "cuda" if torch.cuda.is_available() else "cpu"
+        if TORCH_AVAILABLE:
+            return "cuda" if torch.cuda.is_available() else "cpu"
+        return "cpu"
     
     @classmethod
     def get_system_info(cls) -> Dict[str, Any]:
         """Get system information"""
-        return {
+        info = {
             "device": cls.get_device(),
-            "cuda_available": torch.cuda.is_available(),
-            "cuda_version": torch.version.cuda if torch.cuda.is_available() else None,
-            "pytorch_version": torch.__version__,
             "python_version": os.sys.version
         }
+        if TORCH_AVAILABLE:
+            info.update({
+                "cuda_available": torch.cuda.is_available(),
+                "cuda_version": torch.version.cuda if torch.cuda.is_available() else None,
+                "pytorch_version": torch.__version__,
+            })
+        return info
 
 
 # =============================================================================

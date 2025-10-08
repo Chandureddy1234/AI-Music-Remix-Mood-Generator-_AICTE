@@ -1,34 +1,29 @@
 # AI Music Generator - Streamlit Cloud Production Dependencies
-# Optimized for cloud deployment with minimal dependencies
+# Ultra-minimal for cloud deployment
 
 # ===== CORE FRAMEWORK =====
-streamlit>=1.31.0
+streamlit>=1.31.0,<2.0.0
 streamlit-option-menu>=0.3.12
 
-# ===== DEEP LEARNING & AUDIO (Lightweight) =====
-torch>=2.0.0
-torchaudio>=2.0.0
-transformers>=4.30.0
-
-# ===== AUDIO PROCESSING =====
-librosa>=0.10.0
+# ===== AUDIO PROCESSING (Lightweight) =====
+librosa>=0.10.0,<0.11.0
 soundfile>=0.12.1
 pydub>=0.25.1
-scipy>=1.11.1
-numpy>=1.24.3
+scipy>=1.11.1,<2.0.0
+numpy>=1.24.3,<2.0.0
 
 # ===== LLM INTEGRATION =====
 groq>=0.4.0
 openai>=1.0.0
 
-# ===== CLOUD MUSIC GENERATION APIs =====
+# ===== CLOUD APIs =====
 replicate>=0.15.0
 gradio-client>=0.8.1
 huggingface-hub>=0.20.0
 
 # ===== VISUALIZATION =====
 plotly>=5.14.1
-matplotlib>=3.7.1
+matplotlib>=3.7.1,<4.0.0
 
 # ===== UTILITIES =====
 python-dotenv>=1.0.0
