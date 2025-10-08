@@ -764,6 +764,3 @@ def validate_audio_file(file_path: Path) -> bool:
     except Exception as e:
         logger.error(f"Audio validation failed: {e}")
         return False
-
-
-import torch
